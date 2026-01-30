@@ -51,7 +51,7 @@ jobs:
             # Jalankan container baru
             sudo docker run -d \
               --name deezer-apps \
-              -p 5004:5004 \
+              -p 5006:5006 \
               --restart unless-stopped \
               ${{ secrets.DOCKER_USERNAME }}/deezer-apps:latest
 
