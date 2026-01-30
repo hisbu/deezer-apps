@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+{% if data and 'error' not in data %}
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ol>
+            </nav>
+
+            <h1 class="mb-4">{{ title }}</h1>
+
+            <!-- GENRE LIST -->
+            {% if type == 'genre' and data.data %}
+            <div class="row">
+                {% for genre in data.data %}
+                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                    <div class="card h-100">
+                        {% if genre.picture_medium %}
+                        <img src="{{ genre.picture_medium }}" class="card-img-top" alt="{{ genre.name }}">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <i class="fas fa-music fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ genre.name }}</h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    {% if genre.nb_fan %}
+                                    {{ genre.nb_fan|format_number }} fans
+                                    {% endif %}
+                                </small>
+                            </p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('search') }}?q={{ genre.name }}&type=track" class="btn btn-sm btn-primary w-100">
+                                Explore Tracks
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+          <!-- RADIO LIST -->
+{% elif type == 'radio' and data.data %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-radio"></i> Radio Stations</h2>
+        <div class="row">
+            {% for radio in data.data %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-radio text-primary me-2"></i>
+                            {{ radio.title }}
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {{ radio.description if radio.description else 'Radio station' }}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        {% if radio.share %}
+                        <a href="{{ radio.share }}" target="_blank" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="fas fa-play"></i> Listen
+                        </a>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-secondary w-100" disabled>
+                            <i class="fas fa-play"></i> Listen
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+            <!-- EDITORIAL LIST -->
+{% elif type == 'editorial' and data.data %}
+<div class="row">
+    {% for editorial in data.data %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100">
+            {% if editorial.picture_medium %}
+            <img src="{{ editorial.picture_medium }}" class="card-img-top" alt="{{ editorial.name }}" style="height: 200px; object-fit: cover;">
+            {% else %}
+            <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                <i class="fas fa-star fa-3x text-muted"></i>
+            </div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ editorial.name }}</h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        {{ editorial.type if editorial.type else 'Editorial Pick' }}
+                    </small>
+                </p>
+            </div>
+            <div class="card-footer">
+                {% if editorial.id %}
+                <a href="{{ url_for('editorial_detail', editorial_id=editorial.id) }}" class="btn btn-primary w-100">
+                    <i class="fas fa-eye"></i> Explore Selection
+                </a>
+                {% else %}
+                <button class="btn btn-secondary w-100" disabled>
+                    <i class="fas fa-eye-slash"></i> No Details
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- EDITORIAL DETAIL - SELECTION -->
+{% elif type == 'editorial_detail' and data.data %}
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">Editorial Selection</h3>
+        <p class="text-muted">Curated picks from Deezer editors</p>
+        
+        <div class="row">
+            {% for item in data.data %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100">
+                    <!-- Tampilkan gambar berdasarkan tipe konten -->
+                    {% if item.album and item.album.cover_medium %}
+                    <img src="{{ item.album.cover_medium }}" class="card-img-top" alt="{{ item.album.title }}" style="height: 150px; object-fit: cover;">
+                    {% elif item.cover_medium %}
+                    <img src="{{ item.cover_medium }}" class="card-img-top" alt="{{ item.title }}" style="height: 150px; object-fit: cover;">
+                    {% elif item.picture_medium %}
+                    <img src="{{ item.picture_medium }}" class="card-img-top" alt="{{ item.name }}" style="height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                        <i class="fas fa-music fa-2x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="card-body">
+                        <!-- Judul berdasarkan tipe -->
+                        {% if item.title %}
+                        <h6 class="card-title">{{ item.title }}</h6>
+                        <p class="card-text small text-muted">
+                            {% if item.artist and item.artist.name %}
+                            {{ item.artist.name }}
+                            {% elif item.creator and item.creator.name %}
+                            By {{ item.creator.name }}
+                            {% endif %}
+                        </p>
+                        {% elif item.name %}
+                        <h6 class="card-title">{{ item.name }}</h6>
+                        <p class="card-text small text-muted">
+                            {{ item.type if item.type else 'Content' }}
+                        </p>
+                        {% else %}
+                        <h6 class="card-title">Unknown Item</h6>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-footer">
+                        <!-- Action buttons berdasarkan tipe -->
+                        {% if item.type == 'track' and item.id %}
+                        <a href="{{ url_for('track_detail', track_id=item.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            Track Details
+                        </a>
+                        {% elif item.type == 'album' and item.id %}
+                        <a href="{{ url_for('album_detail', album_id=item.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            Album Details
+                        </a>
+                        {% elif item.type == 'artist' and item.id %}
+                        <a href="{{ url_for('artist_detail', artist_id=item.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            Artist Details
+                        </a>
+                        {% elif item.type == 'playlist' and item.id %}
+                        <a href="{{ url_for('playlist_detail', playlist_id=item.id) }}" class="btn btn-sm btn-outline-primary w-100">
+                            Playlist Details
+                        </a>
+                        {% else %}
+                        <!-- Fallback untuk tipe yang tidak dikenali -->
+                        {% if item.id %}
+                        <a href="{{ url_for('track_detail', track_id=item.id) }}" class="btn btn-sm btn-outline-secondary w-100">
+                            View Details
+                        </a>
+                        {% else %}
+                        <button class="btn btn-sm btn-outline-secondary w-100" disabled>
+                            No Details
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+            <!-- TRACK DETAIL -->
+            {% elif type == 'track' and data %}
+            <!-- Track Detail (kode yang sudah ada) -->
+            <div class="card mb-4">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        {% if data.album and data.album.cover_xl %}
+                        <img src="{{ data.album.cover_xl }}" class="img-fluid rounded-start" alt="{{ data.album.title if data.album.title else 'Album Cover' }}">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                            <i class="fas fa-music fa-5x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ data.title if data.title else 'Unknown Track' }}</h2>
+                            <p class="card-text">
+                                <strong>Artist:</strong> 
+                                {% if data.artist and data.artist.id %}
+                                <a href="{{ url_for('artist_detail', artist_id=data.artist.id) }}">{{ data.artist.name if data.artist.name else 'Unknown Artist' }}</a>
+                                {% else %}
+                                Unknown Artist
+                                {% endif %}
+                            </p>
+                            <p class="card-text">
+                                <strong>Album:</strong> 
+                                {% if data.album and data.album.title %}
+                                {{ data.album.title }}
+                                {% else %}
+                                Unknown Album
+                                {% endif %}
+                            </p>
+                            <p class="card-text">
+                                <strong>Duration:</strong> 
+                                {% if data.duration %}
+                                {{ (data.duration // 60)|int }}:{{ "%02d" % (data.duration % 60) }}
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            </p>
+                            <p class="card-text">
+                                <strong>Release Date:</strong> 
+                                {{ data.release_date if data.release_date else 'Unknown' }}
+                            </p>
+                            {% if data.link %}
+                            <p class="card-text">
+                                <a href="{{ data.link }}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Open in Deezer
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Home
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Track Preview -->
+            {% if data.preview %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-play-circle"></i> Preview</h5>
+                    <audio controls class="w-100">
+                        <source src="{{ data.preview }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ARTIST DETAIL -->
+            {% elif type == 'artist' and data %}
+            <!-- Artist Detail (kode yang sudah ada) -->
+            <div class="card mb-4">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        {% if data.picture_xl %}
+                        <img src="{{ data.picture_xl }}" class="img-fluid rounded-start" alt="{{ data.name if data.name else 'Artist' }}">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                            <i class="fas fa-user fa-5x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ data.name if data.name else 'Unknown Artist' }}</h2>
+                            <p class="card-text">
+                                <strong>Fans:</strong> 
+                                {{ data.nb_fan|format_number if data.nb_fan else '0' }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Albums:</strong> 
+                                {{ data.nb_album if data.nb_album else '0' }}
+                            </p>
+                            {% if data.link %}
+                            <p class="card-text">
+                                <a href="{{ data.link }}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Open in Deezer
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Home
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Tracks -->
+            {% if top_tracks and top_tracks.data %}
+            <h3 class="mb-3">Top Tracks</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Title</th>
+                            <th>Album</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for track in top_tracks.data %}
+                        <tr>
+                            <td>
+                                {% if track.title %}
+                                {{ track.title }}
+                                {% else %}
+                                Unknown Track
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if track.album and track.album.title %}
+                                {{ track.album.title }}
+                                {% else %}
+                                Unknown Album
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if track.duration %}
+                                {{ (track.duration // 60)|int }}:{{ "%02d" % (track.duration % 60) }}
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if track.id %}
+                                <a href="{{ url_for('track_detail', track_id=track.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Details
+                                </a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>No Details</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- ALBUM DETAIL -->
+            {% elif type == 'album' and data %}
+            <!-- Album Detail (kode yang sudah ada) -->
+            <div class="card mb-4">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        {% if data.cover_xl %}
+                        <img src="{{ data.cover_xl }}" class="img-fluid rounded-start" alt="{{ data.title if data.title else 'Album Cover' }}">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center h-100">
+                            <i class="fas fa-compact-disc fa-5x text-muted"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ data.title if data.title else 'Unknown Album' }}</h2>
+                            <p class="card-text">
+                                <strong>Artist:</strong> 
+                                {% if data.artist and data.artist.id %}
+                                <a href="{{ url_for('artist_detail', artist_id=data.artist.id) }}">{{ data.artist.name if data.artist.name else 'Unknown Artist' }}</a>
+                                {% else %}
+                                Unknown Artist
+                                {% endif %}
+                            </p>
+                            <p class="card-text">
+                                <strong>Release Date:</strong> 
+                                {{ data.release_date if data.release_date else 'Unknown' }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Tracks:</strong> 
+                                {{ data.nb_tracks if data.nb_tracks else '0' }}
+                            </p>
+                            <p class="card-text">
+                                <strong>Fans:</strong> 
+                                {{ data.fans|format_number if data.fans else '0' }}
+                            </p>
+                            {% if data.link %}
+                            <p class="card-text">
+                                <a href="{{ data.link }}" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Open in Deezer
+                                </a>
+                                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Home
+                                </a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracks List -->
+            {% if data.tracks and data.tracks.data %}
+            <h3 class="mb-3">Tracks</h3>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Duration</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for track in data.tracks.data %}
+                        <tr>
+                            <td>{{ track.track_position if track.track_position else loop.index }}</td>
+                            <td>{{ track.title if track.title else 'Unknown Track' }}</td>
+                            <td>
+                                {% if track.duration %}
+                                {{ (track.duration // 60)|int }}:{{ "%02d" % (track.duration % 60) }}
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if track.id %}
+                                <a href="{{ url_for('track_detail', track_id=track.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Details
+                                </a>
+                                {% else %}
+                                <button class="btn btn-sm btn-outline-secondary" disabled>No Details</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- DEFAULT UNSUPPORTED TYPE -->
+            {% else %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{{ title }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if data %}
+                        <pre class="bg-light p-3 rounded"><code>{{ data|tojson(indent=2) }}</code></pre>
+                    {% else %}
+                        <p class="text-muted">No data available for this section.</p>
+                    {% endif %}
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-danger text-center">
+        <h4><i class="fas fa-exclamation-triangle"></i> Data Not Available</h4>
+        <p>
+            {% if data and 'error' in data %}
+                API Error: {{ data.error.message if data.error.message else 'Unknown error' }}
+            {% else %}
+                The requested data could not be loaded. Please try again later.
+            {% endif %}
+        </p>
+        <div class="mt-3">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Go Home</a>
+            <a href="{{ url_for('search') }}" class="btn btn-outline-primary">Search Music</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

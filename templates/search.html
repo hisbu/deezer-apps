@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Search - {{ query if query else 'Discover Music' }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4"><i class="fas fa-search"></i> Search Music</h1>
+        
+        <!-- Search Form -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" action="{{ url_for('search') }}" id="searchForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control form-control-lg" name="q" 
+                                   value="{{ query }}" placeholder="Enter artist, track, or album name..." 
+                                   id="searchInput" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select form-select-lg" name="type" id="searchType">
+                                <option value="track" {% if search_type == 'track' %}selected{% endif %}>Tracks</option>
+                                <option value="artist" {% if search_type == 'artist' %}selected{% endif %}>Artists</option>
+                                <option value="album" {% if search_type == 'album' %}selected{% endif %}>Albums</option>
+                                <option value="playlist" {% if search_type == 'playlist' %}selected{% endif %}>Playlists</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-primary btn-lg w-100" id="searchButton">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="alert alert-danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> Application Error</h4>
+            <p>{{ error }}</p>
+            <p class="mb-0">Please try again or contact support if the problem persists.</p>
+        </div>
+        {% endif %}
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center py-5" style="display: none;">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Searching Deezer database...</p>
+        </div>
+
+        <!-- Search Results -->
+        {% if query and not error %}
+            {% if results and results.data %}
+                <div id="searchResults">
+                    <h3 class="mb-3">Search Results for "{{ query }}"</h3>
+                    <p class="text-muted">Found {{ results.total }} results</p>
+
+                    <!-- TRACK SEARCH RESULTS -->
+                    {% if search_type == 'track' %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Artist</th>
+                                    <th>Album</th>
+                                    <th>Duration</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in results.data %}
+                                <tr>
+                                    <td>
+                                        {% if item.album and item.album.cover_small %}
+                                        <img src="{{ item.album.cover_small }}" alt="{{ item.album.title if item.album.title else 'Album' }}" class="me-2" style="width: 40px; height: 40px;">
+                                        {% endif %}
+                                        {{ item.title if item.title else 'Unknown Track' }}
+                                    </td>
+                                    <td>
+                                        {% if item.artist and item.artist.name %}
+                                        {{ item.artist.name }}
+                                        {% else %}
+                                        Unknown Artist
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.album and item.album.title %}
+                                        {{ item.album.title }}
+                                        {% else %}
+                                        Unknown Album
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.duration %}
+                                        {{ (item.duration // 60)|int }}:{{ "%02d" % (item.duration % 60) }}
+                                        {% else %}
+                                        Unknown
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.id %}
+                                        <a href="{{ url_for('track_detail', track_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+                                            Details
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>No Details</button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% elif search_type == 'artist' %}
+                    <div class="row">
+                        {% for item in results.data %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                {% if item.picture_medium %}
+                                <img src="{{ item.picture_medium }}" class="card-img-top" alt="{{ item.name if item.name else 'Artist' }}">
+                                {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-user fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ item.name if item.name else 'Unknown Artist' }}</h5>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            {% if item.nb_fan %}
+                                            {{ item.nb_fan|format_number }} fans
+                                            {% endif %}
+                                            {% if item.nb_album %}
+                                            • {{ item.nb_album }} albums
+                                            {% endif %}
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    {% if item.id %}
+                                    <a href="{{ url_for('artist_detail', artist_id=item.id) }}" class="btn btn-primary w-100">
+                                        View Artist
+                                    </a>
+                                    {% else %}
+                                    <button class="btn btn-secondary w-100" disabled>No Details</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% else %}
+                    <div class="alert alert-info">
+                        <p>Search type '{{ search_type }}' results would be displayed here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+            {% elif results is none %}
+                <div class="alert alert-warning text-center">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Search Temporarily Unavailable</h4>
+                    <p>Unable to connect to Deezer API at the moment.</p>
+                    <div class="mt-3">
+                        <p class="small text-muted">Please try:</p>
+                        <ul class="list-unstyled small">
+                            <li>• Checking your internet connection</li>
+                            <li>• Trying again in a few moments</li>
+                            <li>• Using simpler search terms</li>
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center">
+                    <h4><i class="fas fa-search"></i> No Results Found</h4>
+                    <p>No results found for "{{ query }}". Try different keywords.</p>
+                </div>
+            {% endif %}
+        {% elif not query and not error %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h3>Start Searching</h3>
+                <p>Enter a search term above to discover music, artists, albums, and playlists.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

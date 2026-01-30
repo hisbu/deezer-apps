@@ -1,0 +1,61 @@
+name: Build & Deploy Flask to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # biar bisa manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Build & Push Docker Image
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/deezer-apps:latest
+
+      # 2. Deploy ke VPS via SSH
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          script: |
+            # Login ke Docker Hub
+            echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+            # Pull image terbaru
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/deezer-apps:latest
+
+            # Stop & hapus container lama (jika ada)
+            sudo docker stop deezer-apps || true
+            sudo docker rm deezer-apps || true
+
+            
+
+            # Jalankan container baru
+            sudo docker run -d \
+              --name deezer-apps \
+              -p 5004:5004 \
+              --restart unless-stopped \
+              ${{ secrets.DOCKER_USERNAME }}/deezer-apps:latest
+
+            sudo docker network connect npm-networks deezer-apps || true
+
+            # Logout (opsional)
+            sudo docker logout

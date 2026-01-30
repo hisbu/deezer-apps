@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Discover Music{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-4">
+            <i class="fas fa-headphones"></i> Discover Music
+        </h1>
+        <p class="lead text-center">Explore the world of music with Deezer Lite</p>
+    </div>
+</div>
+
+<!-- Top Charts -->
+{% if chart_data and chart_data.tracks %}
+<!-- Quick Stats dengan efek yang lebih baik -->
+<div class="row mb-5">
+    <div class="col-md-3 mb-3">
+        <div class="card text-white bg-primary clickable-card" onclick="scrollToSection('top-charts')">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-chart-line"></i></h3>
+                <h5>Top Charts</h5>
+                <small>View trending music</small>
+                <div class="card-hover-indicator">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{{ url_for('editorial_list') }}" class="card text-white bg-success text-decoration-none clickable-card">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-compass"></i></h3>
+                <h5>Editorial Picks</h5>
+                <small>Curated selections</small>
+                <div class="card-hover-indicator">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{{ url_for('search') }}" class="card text-white bg-warning text-decoration-none clickable-card">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-search"></i></h3>
+                <h5>Search</h5>
+                <small>Find music</small>
+                <div class="card-hover-indicator">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{{ url_for('genre_list') }}" class="card text-white bg-info text-decoration-none clickable-card">
+            <div class="card-body text-center">
+                <h3><i class="fas fa-music"></i></h3>
+                <h5>Genres</h5>
+                <small>Browse by genre</small>
+                <div class="card-hover-indicator">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-fire"></i> Top Charts</h2>
+        
+        <!-- Tracks -->
+        <h4>Top Tracks</h4>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Artist</th>
+                        <th>Album</th>
+                        <th>Duration</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in chart_data.tracks.data[:10] %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            {% if track.album and track.album.cover_small %}
+                            <img src="{{ track.album.cover_small }}" alt="{{ track.album.title if track.album.title else 'Album' }}" class="me-2" style="width: 40px; height: 40px;">
+                            {% endif %}
+                            {{ track.title if track.title else 'Unknown Title' }}
+                        </td>
+                        <td>{{ track.artist.name if track.artist and track.artist.name else 'Unknown Artist' }}</td>
+                        <td>{{ track.album.title if track.album and track.album.title else 'Unknown Album' }}</td>
+                        <td>
+                            {% if track.duration %}
+                                {{ track.duration|format_duration }}
+                            {% else %}
+                                0:00
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if track.id %}
+                            <a href="{{ url_for('track_detail', track_id=track.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-info-circle"></i> Details
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Artists -->
+        {% if chart_data.artists and chart_data.artists.data %}
+        <h4 class="mt-4">Top Artists</h4>
+        <div class="row">
+            {% for artist in chart_data.artists.data[:6] %}
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    {% if artist.picture_medium %}
+                    <img src="{{ artist.picture_medium }}" class="card-img-top" alt="{{ artist.name if artist.name else 'Artist' }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ artist.name if artist.name else 'Unknown Artist' }}</h5>
+                        <p class="card-text">
+                            {% if artist.nb_fan %}
+                                {{ artist.nb_fan|format_number }} fans
+                            {% else %}
+                                0 fans
+                            {% endif %}
+                        </p>
+                        {% if artist.id %}
+                        <a href="{{ url_for('artist_detail', artist_id=artist.id) }}" class="btn btn-primary">
+                            View Artist
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Editorial Picks -->
+{% if editorial_data and editorial_data.data %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="fas fa-star"></i> Editorial Picks</h2>
+        <div class="row">
+            {% for editorial in editorial_data.data[:6] %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100">
+                    {% if editorial.picture_medium %}
+                    <img src="{{ editorial.picture_medium }}" class="card-img-top" alt="{{ editorial.name if editorial.name else 'Editorial' }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-star fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ editorial.name if editorial.name else 'Unknown Editorial' }}</h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {{ editorial.type if editorial.type else 'Editorial Pick' }}
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        {% if editorial.id %}
+                        <a href="{{ url_for('editorial_detail', editorial_id=editorial.id) }}" class="btn btn-primary w-100">
+                            <i class="fas fa-eye"></i> Explore
+                        </a>
+                        {% else %}
+                        <button class="btn btn-secondary w-100" disabled>
+                            <i class="fas fa-eye-slash"></i> No Details
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Link ke halaman editorial lengkap -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('editorial_list') }}" class="btn btn-outline-primary">
+                <i class="fas fa-list"></i> View All Editorial Picks
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Error Message jika data tidak tersedia -->
+{% if not chart_data and not editorial_data %}
+<div class="alert alert-warning text-center">
+    <h4><i class="fas fa-exclamation-triangle"></i> Data Not Available</h4>
+    <p>Unable to load data from Deezer API. Please check your internet connection and try again.</p>
+</div>
+{% endif %}
+
+{% endblock %}
